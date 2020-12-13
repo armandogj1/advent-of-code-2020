@@ -22,12 +22,19 @@ lineReader.on('close', () => {
 	// run function
 
 	const ship = new Ship();
+	const rotations = [
+		['L', 90],
+		['L', 90],
+		['L', 90],
+		['L', 90],
+	];
 
 	console.log(ship);
 	navigationOrders.forEach((action) => {
-		ship.applyAction(action);
+		ship.waypointNavigation(action);
+		console.log(ship);
 	});
-
+	console.log(ship);
 	console.log(ship.getManhattan());
 });
 
@@ -36,6 +43,7 @@ class Ship {
 	direction = 'east';
 	east = 0;
 	north = 0;
+	coordinates = [10, 1];
 
 	applyAction(action) {
 		const [direction, units] = action;
@@ -98,6 +106,64 @@ class Ship {
 
 	getManhattan() {
 		return Math.abs(this.north) + Math.abs(this.east);
+	}
+
+	rotateWaypoint(action) {
+		let [rotation, degrees] = action;
+		const [x, y] = this.coordinates;
+
+		degrees = degrees % 360;
+
+		if (rotation === 'L') {
+			switch (degrees) {
+				case 90:
+					return (this.coordinates = [-y, x]);
+				case 180:
+					return (this.coordinates = [-x, -y]);
+				case 270:
+					return (this.coordinates = [y, -x]);
+			}
+		} else {
+			switch (degrees) {
+				case 90:
+					return (this.coordinates = [y, -x]);
+				case 180:
+					return (this.coordinates = [-x, -y]);
+				case 270:
+					return (this.coordinates = [-y, x]);
+			}
+		}
+	}
+
+	calculateForward(multiplier) {
+		const [x, y] = this.coordinates;
+
+		this.east += x * multiplier;
+		this.north += y * multiplier;
+	}
+
+	waypointNavigation(action) {
+		const [order, units] = action;
+		const [x, y] = this.coordinates;
+
+		switch (order) {
+			case 'N':
+				return (this.coordinates = [x, y + units]);
+			case 'S':
+				return (this.coordinates = [x, y - units]);
+			case 'E':
+				return (this.coordinates = [x + units, y]);
+			case 'W':
+				return (this.coordinates = [x - units, y]);
+			case 'F':
+				return this.calculateForward(units);
+			case 'R':
+				return this.rotateWaypoint(action);
+			case 'L':
+				return this.rotateWaypoint(action);
+			default:
+				return console.log('unhandled case');
+		}
 	}
 }
 
