@@ -22,9 +22,10 @@ lineReader.on('close', () => {
 	console.log(checkTimes(instTupple[0], instTupple[1]));
 
 	const partTwoInst = partTwoFormat(instructions);
-	console.log(partTwoInst);
+
 	console.log(contiguousBusTimes(partTwoInst));
-	// console.log(findFirstTimeOfFirstBus(1000417, 23));
+
+	const busTimes = getValuesForBusTimes(partTwoInst[1]);
 });
 
 const formatInstructions = (inst) => {
@@ -77,30 +78,59 @@ const contiguousBusTimes = (inst) => {
 	let currBus = 0;
 
 	// get first time for first bus
-	let timeFirstBus = findFirstTimeOfFirstBus(time, busses[0]);
-	let currTime = timeFirstBus;
+	let busTimeDifferences = getValuesForBusTimes(busses);
+	let timeFirstBus = calculateProductOfBusTimes(
+		busTimeDifferences,
+		Number(busses[0])
+	);
 
-	while (currBus < busses.length) {
-		// if current bus is present or no bus at current time
-		if (busses[currBus] === 'x' || currTime % busses[currBus] === 0) {
-			// increment currbus and time
-			currBus += 1;
-			currTime += 1;
-		} else {
-			// otherwise keep currtime and start back at zero
-			currBus = 0;
-			timeFirstBus += Number(busses[0]);
-			currTime = timeFirstBus;
-		}
-	}
-
-	// return time minus the number of busses
 	return timeFirstBus;
-	// return timeFirstBus;
 };
 
 const findFirstTimeOfFirstBus = (timeStamp, bus) => {
 	bus = Number(bus);
 
 	return timeStamp + (23 - (timeStamp % bus));
+};
+
+const getValuesForBusTimes = (busses) => {
+	const busTimes = {};
+
+	busses.forEach((bus, idx) => {
+		if (bus !== 'x') {
+			busTimes[bus] = idx;
+		}
+	});
+
+	return busTimes;
+};
+
+const checkAllBusTimes = (time, busTimes) => {
+	let isValid = true;
+
+	Object.entries(busTimes).forEach(([bus, timeDif]) => {
+		if ((time + timeDif) % Number(bus) > 0) {
+			isValid = false;
+		}
+	});
+
+	return isValid;
+};
+
+const calculateProductOfBusTimes = (busTimes, startNum) => {
+	let lcd = startNum;
+	return Object.entries(busTimes)
+		.sort((a, b) => {
+			return b[1] - a[1];
+		})
+		.reduce((time, [bus, offset]) => {
+			if (offset !== 0) {
+				while ((time + offset) % Number(bus) !== 0) {
+					time += lcd;
+				}
+				lcd = lcd * Number(bus);
+			}
+
+			return time;
+		}, startNum);
 };
