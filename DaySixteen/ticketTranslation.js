@@ -26,20 +26,20 @@ lineReader.on('close', () => {
 	// console.log(getInvalidFields(testFirstTicket));
 
 	// console.log(getErrorSum(insts));
-	const validTix = getValidSum(insts);
+	const tix = getValidSum(insts);
 
-	const rangesForAllFields = generaterRangesForAllFields(
-		insts.rules,
-		validTix[0]
-	);
+	// const rangesForAllFields = generaterRangesForAllFields(insts.rules, tix[0]);
 	// console.log(rangesForAllFields[0].size);
 	// console.log(checkRangesForField(489, rangesForAllFields[0]));
 	// console.log(checkRangesForField(224, rangesForAllFields[0]));
 	// console.log(rangesForAllFields[0].size);
-
+	const validTix = onlyValidTix(tix);
+	// console.log(validTix);
 	const test = checkAllFieldsForAllRanges(validTix, insts.rules);
+	let i = 0;
 	test.forEach((fieldRange, key) => {
-		console.log(fieldRange.size);
+		console.log(fieldRange);
+		console.log(i++);
 	});
 });
 
@@ -167,6 +167,13 @@ const isRangeValid = (field, range) => {
 	const firstRange = field >= Number(min[0]) && field <= Number(min[1]);
 	const secondRange = field >= Number(max[0]) && field <= Number(max[1]);
 
+	// console.log(
+	// 	'this is currfield: ',
+	// 	field,
+	// 	'range: ',
+	// 	range,
+	// 	firstRange || secondRange
+	// );
 	return firstRange || secondRange;
 };
 
@@ -174,6 +181,7 @@ const checkRangesForField = (field, ranges) => {
 	ranges.forEach((range, key) => {
 		// console.log(!isRangeValid(field, range), field, key, range);
 		if (!isRangeValid(field, range)) {
+			console.log(field, range);
 			ranges.delete(key);
 		}
 	});
@@ -183,22 +191,38 @@ const checkRangesForField = (field, ranges) => {
 const checkAllFieldsForAllRanges = (tickets, rules) => {
 	const allRangesAllFields = generaterRangesForAllFields(rules, tickets[0]);
 
-	// console.log(tickets);
 	let count = 0;
-	tickets.forEach((fields, ticket) => {
-		console.log('this', fields);
-		let i = 0;
-		if (count < 15) {
-			fields.forEach((bool, currField) => {
-				const currRangesForField = allRangesAllFields[i];
+	const fields = tickets[0];
 
-				checkRangesForField(currField, currRangesForField);
-				i += 1;
-			});
-		}
+	tickets.forEach((fields) => {
+		let i = 0;
+		// if (count < 5) {
+		fields.forEach((bool, currField) => {
+			const currRangesForField = allRangesAllFields[i];
+
+			checkRangesForField(currField, currRangesForField);
+			i += 1;
+		});
+		// }
 		count += 1;
-		// console.log(allRangesAllFields);
 	});
-	console.log(allRangesAllFields);
+
+	// console.log(allRangesAllFields);
+
+	// console.log(allRangesAllFields);
 	return allRangesAllFields;
+};
+
+const onlyValidTix = (tickets) => {
+	return tickets.reduce((acc, ticket) => {
+		let invalid = false;
+		ticket.forEach((bool, field) => {
+			if (bool) {
+				invalid = bool;
+			}
+		});
+		if (invalid) return acc;
+		acc.push(ticket);
+		return acc;
+	}, []);
 };
