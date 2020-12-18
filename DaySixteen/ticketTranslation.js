@@ -33,12 +33,21 @@ lineReader.on('close', () => {
 	// console.log(checkRangesForField(489, rangesForAllFields[0]));
 	// console.log(checkRangesForField(224, rangesForAllFields[0]));
 	// console.log(rangesForAllFields[0].size);
+	const mytixsplit = insts.myTicket.split(',');
+	const mytix = mytixsplit.reduce((acc, field) => {
+		acc.set(field, false);
+		return acc;
+	}, new Map());
+
 	const validTix = onlyValidTix(tix);
+	console.log(validTix.length);
+	validTix.push(mytix);
+	console.log(validTix.length);
 	// console.log(validTix);
 	const test = checkAllFieldsForAllRanges(validTix, insts.rules);
 	let i = 0;
 	test.forEach((fieldRange, key) => {
-		console.log(fieldRange);
+		console.log(fieldRange.size);
 		console.log(i++);
 	});
 });
