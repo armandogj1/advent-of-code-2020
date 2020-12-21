@@ -27,8 +27,8 @@ lineReader.on('close', () => {
 	// run function
 	const ruleMap = generateMap(rules);
 	console.log(ruleMap, messages);
-	const count = checkCharsWithRules(ruleMap, messages[2], ruleMap.get(0));
-	console.log(count);
+	const count = checkCharsWithRules(ruleMap, ruleMap.get(0), []);
+	console.log(JSON.stringify(count));
 });
 
 const cleanStr = (str) => {
@@ -58,48 +58,50 @@ const formatRules = (str) => {
 	return split.split('|').map((s) => s.trim().split(' '));
 };
 
-const checkCharsWithRules = (rules, string, rule, memo) => {
+const checkCharsWithRules = (rules, rule, string) => {
 	// if (string.length === 0) return 1;
 
-	let validLetters = string;
+	if (typeof rules.get(+rule) === 'string') {
+		return rule;
+	} else {
+		const innerRule = rules.get(+rule);
 
-	for (let i = 0; i < rule.length; i++) {
-		// get curr rule
-		// if it is an array
-		if (Array.isArray(rules[i])) {
-			const currRule = rule[i];
-			// copy string and call check with arr and copy
-			const copy = string;
-
-			for (let j = 0; j < currRule.length; j++) {
-				const innerRule = rules.get(cuurRule[j]);
-
-				if (typeof innerRule === 'string') {
-					if (copy[0] === innerRule) {
-						copy = copy.slice(1);
-					} else {
-						break;
-					}
-				} else {
-					checkCharsWithRules(rules, copy, innerRule);
-				}
-			}
-		} else {
-			const currRule = rules.get(rule[i]);
-			// otherwise compare rule with current first char
-			if (validLetters[0] === currRule) {
-				// if match remove from string and continue
-				validLetters = validLetters.slice(1);
-				console.log(validLetters);
-			} else if (Array.isArray(currRule)) {
-				const copy = validLetters;
-				checkCharsWithRules(rules, validLetters, currRule);
-			} else {
-				// otherwise break
-				break;
-			}
-		}
+		innerRule.forEach((inner) => {
+			checkCharsWithRules(rules, innerRule, string);
+		});
 	}
 
-	return validLetters;
+	let strings = [];
+	for (let i = 0; i < rule.length; i++) {
+		// current rule
+		const currRule = rule[i];
+
+		if (Array.isArray(currRule)) {
+			// if not string get rule from map
+			// call check on the array with a new set
+			currRule.forEach((inner) => {
+				const letterSet = checkCharsWithRules(rules, inner, []);
+				memo.push(letterSet);
+			});
+			// add set to validStrings
+		} else {
+			const innerRule = rules.get(+currRule);
+
+			const letterSet = checkCharsWithRules(rules, innerRule, []);
+			console.log('this is before add', letterSet);
+			memo.push(letterSet);
+		}
+		// if current is a char
+		// add set to validStrings
+	}
+
+	return memo;
 };
+
+// const generatePermutations = (set, string) => {
+// 	const strings = set.;
+
+// 	for (let i = 1; i < set.length; i++) {
+
+// 	}
+// };
