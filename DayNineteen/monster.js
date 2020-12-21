@@ -26,9 +26,9 @@ lineReader.on('line', (line) => {
 lineReader.on('close', () => {
 	// run function
 	const ruleMap = generateMap(rules);
-	console.log(ruleMap, messages);
-	const count = checkCharsWithRules(ruleMap, ruleMap.get(0), []);
-	console.log(JSON.stringify(count));
+
+	const count = generateStrings(ruleMap, ruleMap.get('0'));
+	console.log(count);
 });
 
 const cleanStr = (str) => {
@@ -41,67 +41,88 @@ const cleanStr = (str) => {
 	return clean;
 };
 
-const generateMap = (arr) => new Map(arr.entries());
+const generateMap = (arr) => new Map(arr);
 
 const formatRules = (str) => {
-	const split = str.split(': ')[1];
+	const [idx, rule] = str.split(': ');
 
-	if (split[0] === '"') {
-		return split.slice(1, split.length - 1);
+	if (rule[0] === '"') {
+		return [idx, rule.slice(1, rule.length - 1)];
 	}
 
 	const reg = /\|/;
-	if (!reg.test(split)) {
-		return split.trim().split(' ');
+	if (!reg.test(rule)) {
+		return [idx, rule.trim().split(' ')];
 	}
 
-	return split.split('|').map((s) => s.trim().split(' '));
+	return [idx, rule.split('|').map((s) => s.trim().split(' '))];
 };
 
-const checkCharsWithRules = (rules, rule, string) => {
-	// if (string.length === 0) return 1;
-
-	if (typeof rules.get(+rule) === 'string') {
-		return rule;
-	} else {
-		const innerRule = rules.get(+rule);
-
-		innerRule.forEach((inner) => {
-			checkCharsWithRules(rules, innerRule, string);
-		});
-	}
-
-	let strings = [];
-	for (let i = 0; i < rule.length; i++) {
-		// current rule
-		const currRule = rule[i];
-
+const generateStrings = (rules, rule, string = '') => {
+	// if rule is a string
+	if (typeof rule === 'string') {
+		const currRule = rules.get(rule);
 		if (Array.isArray(currRule)) {
-			// if not string get rule from map
-			// call check on the array with a new set
-			currRule.forEach((inner) => {
-				const letterSet = checkCharsWithRules(rules, inner, []);
-				memo.push(letterSet);
-			});
-			// add set to validStrings
+			return generateStrings(rules, currRule);
+		} else if (typeof currRule === 'string') {
+			return currRule;
 		} else {
-			const innerRule = rules.get(+currRule);
-
-			const letterSet = checkCharsWithRules(rules, innerRule, []);
-			console.log('this is before add', letterSet);
-			memo.push(letterSet);
+			return;
 		}
-		// if current is a char
-		// add set to validStrings
 	}
 
-	return memo;
+	// create a bucket
+	let bucket = [];
+	// iterate over the rule
+	for (let i = 0; i < rule.length; i++) {
+		// call generate on current inner rule
+		const curr = generateStrings(rules, rule[i]);
+		if (bucket.length === 0) {
+			bucket = bucket.concat(curr);
+		} else {
+			bucket.forEach((val, idx) => {
+				bucket[idx] = bucket[idx].concat(curr);
+			});
+		}
+	}
+	// take the returned value and add it to the values in the bucket
+
+	// return the bucket
+	return bucket;
 };
 
-// const generatePermutations = (set, string) => {
-// 	const strings = set.;
+const flatten = (arr) => {
+	return arr.map((cur) => {
+		if (Array.isArray(cur)) {
+			return flatten(cur);
+		}
+		return cur;
+	});
+};
 
-// 	for (let i = 1; i < set.length; i++) {
-
-// 	}
-// };
+[
+	['a'],
+	[
+		[
+			[
+				[['a'], ['a']],
+				[['b'], ['b']],
+			],
+			[
+				[['a'], ['b']],
+				[['b'], ['a']],
+			],
+		],
+		[
+			[
+				[['a'], ['b']],
+				[['b'], ['a']],
+			],
+			[
+				[['a'], ['a']],
+				[['b'], ['b']],
+			],
+		],
+	],
+	['b'],
+];
