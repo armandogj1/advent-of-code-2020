@@ -27,8 +27,13 @@ lineReader.on('close', () => {
 	// run function
 	const ruleMap = generateMap(rules);
 
-	const count = generateStrings(ruleMap, ruleMap.get('0'));
-	console.log(count);
+	const allPerms = generateStrings(ruleMap, ruleMap.get('0'));
+	const uniquePerms = generateSet(allPerms);
+	console.log(uniquePerms.size);
+
+	console.log(messages.length);
+	const validMessages = messages.filter((msg) => uniquePerms.has(msg));
+	console.log(validMessages.length);
 });
 
 const cleanStr = (str) => {
@@ -42,6 +47,7 @@ const cleanStr = (str) => {
 };
 
 const generateMap = (arr) => new Map(arr);
+const generateSet = (arr) => new Set(arr);
 
 const formatRules = (str) => {
 	const [idx, rule] = str.split(': ');
@@ -50,45 +56,43 @@ const formatRules = (str) => {
 		return [idx, rule.slice(1, rule.length - 1)];
 	}
 
-	const reg = /\|/;
-	if (!reg.test(rule)) {
-		return [idx, rule.trim().split(' ')];
-	}
+	// const reg = /\|/;
+	// if (!reg.test(rule)) {
+	// 	return [idx, rule.trim().split(' ')];
+	// }
 
 	return [idx, rule.split('|').map((s) => s.trim().split(' '))];
 };
 
-const generateStrings = (rules, rule, string = '') => {
-	// if rule is a string
-	if (typeof rule === 'string') {
-		const currRule = rules.get(rule);
-		if (Array.isArray(currRule)) {
-			return generateStrings(rules, currRule);
-		} else if (typeof currRule === 'string') {
-			return currRule;
-		} else {
-			return;
-		}
-	}
-
+const generateStrings = (rules, rule, messages = '') => {
 	// create a bucket
-	let bucket = [];
-	// iterate over the rule
-	for (let i = 0; i < rule.length; i++) {
-		// call generate on current inner rule
-		const curr = generateStrings(rules, rule[i]);
-		if (bucket.length === 0) {
-			bucket = bucket.concat(curr);
-		} else {
-			bucket.forEach((val, idx) => {
-				bucket[idx] = bucket[idx].concat(curr);
-			});
-		}
-	}
-	// take the returned value and add it to the values in the bucket
+	return rule.flatMap((ruleSet) => {
+		let strings = [messages];
+		// iterate over the rule
+		for (let i = 0; i < ruleSet.length; i++) {
+			// call generate on current inner rule
+			const currRule = rules.get(ruleSet[i]);
 
-	// return the bucket
-	return bucket;
+			if (typeof currRule === 'string') {
+				strings = strings.map((valid) => valid + currRule);
+			} else if (currRule) {
+				strings = strings.flatMap((msgs) => {
+					const test = generateStrings(rules, currRule, msgs);
+
+					return test;
+				});
+			} else {
+				strings = strings.flatMap((msgs) =>
+					generateStrings(rules, ruleSet[i], msgs)
+				);
+			}
+
+			if (strings.length === 0) {
+				return false;
+			}
+		}
+		return strings;
+	});
 };
 
 const flatten = (arr) => {
@@ -99,30 +103,3 @@ const flatten = (arr) => {
 		return cur;
 	});
 };
-
-[
-	['a'],
-	[
-		[
-			[
-				[['a'], ['a']],
-				[['b'], ['b']],
-			],
-			[
-				[['a'], ['b']],
-				[['b'], ['a']],
-			],
-		],
-		[
-			[
-				[['a'], ['b']],
-				[['b'], ['a']],
-			],
-			[
-				[['a'], ['a']],
-				[['b'], ['b']],
-			],
-		],
-	],
-	['b'],
-];
